@@ -1,0 +1,29 @@
+* * * * * * * * * * * * * * * * * * * * * *
+*                                         *
+*              Release                    *
+*                                         *
+* * * * * * * * * * * * * * * * * * * * * *
+
+========================= 1 - Run docker image =========================
+
+docker run --name some-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+
+========================= 2 - Create Database =========================
+
+Connect to database postgres with user postgres and run script:
+
+    - CREATE_DATABASE_V1.sql
+
+========================= 3 - Create Table    =========================
+
+Connect to db:
+
+	hostaname: localhost
+	port: 5432
+	database: postgres
+	user: user-mgmt-user
+	password: user-mgmt-user
+	
+	and run script:
+
+		- CREATE_TABLE_V1.sql
