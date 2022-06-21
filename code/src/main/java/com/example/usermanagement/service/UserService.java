@@ -5,14 +5,15 @@ import com.example.usermanagement.mapper.UserMapper;
 import com.example.usermanagement.repository.bean.User;
 import com.example.usermanagement.repository.UserRepository;
 import com.example.usermanagement.util.CSVUtils;
+import com.example.usermanagement.util.ValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,7 +29,7 @@ public class UserService {
     @Autowired
     UserMapper userMapper;
 
-
+    @Transactional
     public List<User> getUsers(){
 
         List<User> users = userRepository.findAll();
@@ -40,6 +41,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    @Transactional
     public List<User> getUsersBySurname(String surname){
 
         List<User> users = userRepository.findAll();
@@ -54,6 +56,7 @@ public class UserService {
         return usersFilter;
     }
 
+    @Transactional
     public User getUser(Long userId){
 
         Optional<User> userOptional =  userRepository.findById(userId);
@@ -66,6 +69,7 @@ public class UserService {
 
     }
 
+    @Transactional
     public void createUser(UserDto userDto){
 
         User user = userMapper.userDtoToUser(userDto);
@@ -83,6 +87,7 @@ public class UserService {
         log.debug("Created user with id: {}", user.getId());
     }
 
+    @Transactional
     public void deleteUser(Long userId){
 
         boolean exists = userRepository.existsById(userId);
@@ -98,6 +103,7 @@ public class UserService {
         log.debug("Deleted user with id: {}", userId);
     }
 
+    @Transactional
     public void updateUser(UserDto userDto, Long id){
 
         User user = userMapper.userDtoToUser(userDto);
@@ -131,28 +137,38 @@ public class UserService {
         log.debug("Updated user with id: {}", id);
     }
 
+    @Transactional
     public List<String> uploadUsers(MultipartFile file) {
 
         List<String> errorList = new LinkedList<>();
 
         try {
-            List<User> users = CSVUtils.csvToUsers((file.getInputStream()));
-            users.forEach(user -> {
+            List<UserDto> usersDto = CSVUtils.csvToUsersDto((file.getInputStream()));
+            usersDto.forEach(userDto -> {
 
-                Optional<User> userOptional = userRepository.findUserByEmail(user.getEmail());
+                List<User> users = new LinkedList<>();
 
-                if(userOptional.isPresent()){
-                    errorList.add("User with email: " + user.getEmail() + " not saved due: email already exists");
-                }
+                String validationErr = ValidationUtils.validateUserDto(userDto);
 
+                if (!validationErr.isEmpty()){
 
-                if(!userOptional.isPresent()) {
-                    try {
-                        userRepository.save(user);
-                    } catch (Exception e) {
-                        errorList.add("User with email: " + user.getEmail() + " not saved due: " + e.getCause().getCause());
+                    errorList.add("User with email: " + userDto.getEmail() + " not saved due: validation error: " + validationErr);
+
+                } else {
+
+                    User userToStore = userMapper.userDtoToUser(userDto);
+                    Optional<User> userOptional = userRepository.findUserByEmail(userToStore.getEmail());
+
+                    if(userOptional.isPresent()){
+                        errorList.add("User with email: " + userDto.getEmail() + " not saved due: email already exists");
+                    }
+
+                    else {
+                        users.add(userToStore);
                     }
                 }
+
+                userRepository.saveAll(users);
             });
 
         } catch (IOException e) {

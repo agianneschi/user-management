@@ -3,26 +3,32 @@ package com.example.usermanagement.dto;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class UserDto {
 
     @NotNull(message = "Name may not be null")
     @NotBlank(message = "Name may not be blank")
+    @Size(min = 1, max = 50)
     private String name;
 
     @NotNull(message = "Surname may not be null")
     @NotBlank(message = "Surname may not be blank")
+    @Size(min = 1, max = 50)
     private String surname;
 
     @NotNull(message = "Email may not be null")
     @NotBlank(message = "Email may not be blank")
     @Email
+    @Size(min = 1, max = 50)
     private String email;
 
     @NotNull(message = "Password may not be null")
     @NotBlank(message = "Password may not be blank")
+    @Size(min = 1, max = 50)
     private String password;
 
+    @Size(min = 1, max = 100)
     private String address;
 
     public String getName() {
