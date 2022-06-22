@@ -57,7 +57,7 @@ public class UserController {
 
         userService.createUser(userDto);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage("User Created"));
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Created"));
     }
 
     @PostMapping("/upload")
@@ -69,35 +69,39 @@ public class UserController {
 
                 if(messageList.isEmpty()){
                     message = "Uploaded the file successfully: " + file.getOriginalFilename();
-                    return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
+                    return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK, message));
                 } else {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ResponseMessage(ObjectToJson.convert(messageList)));
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ResponseMessage(HttpStatus.CONFLICT, ObjectToJson.convert(messageList)));
                 }
 
             } catch (Exception e) {
                 message = "Could not upload the file: " + file.getOriginalFilename() + "!";
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(HttpStatus.EXPECTATION_FAILED,message));
             }
         }
         message = "Please upload a csv file!";
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(message));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(HttpStatus.BAD_REQUEST, message));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable("id") Long id){
+    public ResponseEntity<ResponseMessage> deleteUser(@PathVariable("id") Long id){
 
         log.info("Received request to delete User with Id: |{}", id);
 
         userService.deleteUser(id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Deleted"));
     }
 
     @PutMapping("/{id}")
-    public void updateUser(
+    public ResponseEntity<ResponseMessage> updateUser(
             @PathVariable("id") Long id,
             @Valid @RequestBody UserDto userDto){
 
         log.info("Received request to Update User: |{}", ObjectToJson.convert(userDto));
 
         userService.updateUser(userDto, id);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Updated"));
     }
 }

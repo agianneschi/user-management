@@ -3,7 +3,7 @@ package com.example.usermanagement.repository.bean;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "usermgmt")
+@Table(name = "users")
 public class User {
     @Id
     @Column(name = "id", nullable = false)
