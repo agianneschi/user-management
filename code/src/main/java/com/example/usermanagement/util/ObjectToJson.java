@@ -11,6 +11,7 @@ public class ObjectToJson {
     private static ObjectMapper mapper = new ObjectMapper();
 
     public static <T> String convert(T o) {
+
         try {
             return mapper.writeValueAsString(o);
         } catch (JsonProcessingException ex) {

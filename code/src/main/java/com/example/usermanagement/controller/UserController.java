@@ -57,30 +57,41 @@ public class UserController {
 
         userService.createUser(userDto);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Created"));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResponseMessage(HttpStatus.OK,"User Created"));
     }
 
     @PostMapping("/upload")
     public ResponseEntity<ResponseMessage> uploadFile(@RequestParam("file") MultipartFile file) {
+
         String message = "";
-        if (CSVUtils.hasCSVFormat(file)) {
-            try {
-                List<String> messageList = userService.uploadUsers(file);
 
-                if(messageList.isEmpty()){
-                    message = "Uploaded the file successfully: " + file.getOriginalFilename();
-                    return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK, message));
-                } else {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ResponseMessage(HttpStatus.CONFLICT, ObjectToJson.convert(messageList)));
-                }
-
-            } catch (Exception e) {
-                message = "Could not upload the file: " + file.getOriginalFilename() + "!";
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(HttpStatus.EXPECTATION_FAILED,message));
-            }
+        //Check that the file is a csv
+        if (!CSVUtils.hasCSVFormat(file)) {
+            message = "Please upload a csv file";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ResponseMessage(HttpStatus.BAD_REQUEST, message));
         }
-        message = "Please upload a csv file!";
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(HttpStatus.BAD_REQUEST, message));
+
+        try {
+            List<String> messageList = userService.uploadUsers(file);
+
+            //if the list is empty then there have been no errors. Otherwise there were conflicts
+            if(messageList.isEmpty()){
+                message = "Uploaded the file successfully: " + file.getOriginalFilename();
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ResponseMessage(HttpStatus.OK, message));
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ResponseMessage(HttpStatus.CONFLICT, ObjectToJson.convert(messageList)));
+            }
+
+        } catch (Exception e) {
+            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
+                    .body(new ResponseMessage(HttpStatus.EXPECTATION_FAILED,message));
+        }
+
     }
 
     @DeleteMapping("/{id}")
@@ -90,7 +101,8 @@ public class UserController {
 
         userService.deleteUser(id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Deleted"));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResponseMessage(HttpStatus.OK,"User Deleted"));
     }
 
     @PutMapping("/{id}")
@@ -102,6 +114,7 @@ public class UserController {
 
         userService.updateUser(userDto, id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(HttpStatus.OK,"User Updated"));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResponseMessage(HttpStatus.OK,"User Updated"));
     }
 }

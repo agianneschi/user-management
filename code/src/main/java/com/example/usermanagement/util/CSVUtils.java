@@ -26,9 +26,11 @@ public class CSVUtils {
     }
 
     public static List<UserDto> csvToUsersDto(InputStream is) {
+
         try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
              CSVParser csvParser = new CSVParser(fileReader,
                      CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());) {
+
             List<UserDto> usersDto = new ArrayList<UserDto>();
             Iterable<CSVRecord> csvRecords = csvParser.getRecords();
             for (CSVRecord csvRecord : csvRecords) {
@@ -40,7 +42,9 @@ public class CSVUtils {
                 userDto.setAddress(csvRecord.get("user_address"));
                 usersDto.add(userDto);
             }
+
             return usersDto;
+
         } catch (IOException e) {
             throw new RuntimeException("fail to parse CSV file: " + e.getMessage());
         }

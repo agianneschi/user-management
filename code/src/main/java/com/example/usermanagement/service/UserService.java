@@ -1,6 +1,7 @@
 package com.example.usermanagement.service;
 
 import com.example.usermanagement.dto.UserDto;
+import com.example.usermanagement.exception.EntityAlreadyExistsException;
 import com.example.usermanagement.mapper.UserMapper;
 import com.example.usermanagement.repository.bean.User;
 import com.example.usermanagement.repository.UserRepository;
@@ -45,6 +46,8 @@ public class UserService {
     public List<User> getUsersBySurname(String surname){
 
         List<User> users = userRepository.findAll();
+
+        //filter Users bySurname
         List<User> usersFilter = users
                 .stream().filter(u -> u.getSurname().toLowerCase().equals(surname.toLowerCase()))
                 .collect(Collectors.toList());
@@ -61,6 +64,7 @@ public class UserService {
 
         Optional<User> userOptional =  userRepository.findById(userId);
 
+        //check if User is present
         if(!userOptional.isPresent()){
             throw new EntityNotFoundException("User with Id: " +userId+ " does not exists");
         }
@@ -76,8 +80,9 @@ public class UserService {
 
         Optional<User> userOptional = userRepository.findUserByEmail(user.getEmail());
 
+        //check if User is present
         if(userOptional.isPresent()){
-            throw new IllegalStateException(
+            throw new EntityAlreadyExistsException(
                     "User with email: " + user.getEmail() + " already exist"
             );
         }
@@ -92,6 +97,7 @@ public class UserService {
 
         boolean exists = userRepository.existsById(userId);
 
+        //check if User is present
         if (!exists){
             throw new EntityNotFoundException(
                     "user with id: " + userId + " does not exists"
@@ -103,13 +109,14 @@ public class UserService {
         log.debug("Deleted user with id: {}", userId);
     }
 
-    @Transactional
+
     public void updateUser(UserDto userDto, Long id){
 
         User user = userMapper.userDtoToUser(userDto);
 
         Optional<User> userOptional = userRepository.findById(id);
 
+        //check if User is present
         if(!userOptional.isPresent()){
             throw new EntityNotFoundException(
                     "user with id: " + id + " does not exists"
@@ -140,20 +147,22 @@ public class UserService {
     @Transactional
     public List<String> uploadUsers(MultipartFile file) {
 
+        //initialize List of validation error
         List<String> errorList = new LinkedList<>();
 
         try {
+
+            //convert csv lines to userDto
             List<UserDto> usersDto = CSVUtils.csvToUsersDto((file.getInputStream()));
             usersDto.forEach(userDto -> {
 
                 List<User> users = new LinkedList<>();
 
+                //validate userDto
                 String validationErr = ValidationUtils.validateUserDto(userDto);
 
                 if (!validationErr.isEmpty()){
-
                     errorList.add("User with email: " + userDto.getEmail() + " not saved due: validation error: " + validationErr);
-
                 } else {
 
                     User userToStore = userMapper.userDtoToUser(userDto);
@@ -162,12 +171,10 @@ public class UserService {
                     if(userOptional.isPresent()){
                         errorList.add("User with email: " + userDto.getEmail() + " not saved due: email already exists");
                     }
-
                     else {
                         users.add(userToStore);
                     }
                 }
-
                 userRepository.saveAll(users);
             });
 
