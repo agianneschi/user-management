@@ -1,6 +1,7 @@
 package com.example.usermanagement;
 
 import com.example.usermanagement.dto.UserDto;
+import com.example.usermanagement.exception.EntityAlreadyExistsException;
 import com.example.usermanagement.repository.UserRepository;
 import com.example.usermanagement.repository.bean.User;
 import com.example.usermanagement.service.UserService;
@@ -42,6 +43,21 @@ public class UserServiceTest {
     }
 
     @Test
+    @DisplayName("Test find all users - Not Found")
+    void findAll_NotFound() {
+
+        List<User> listUser = new ArrayList<User>();
+
+        when(userRepository.findAll()).thenReturn(listUser);
+
+        EntityNotFoundException thrown =Assertions.assertThrows(EntityNotFoundException.class, () ->{
+            List<User> users = userService.getUsers();
+        });
+
+        Assertions.assertEquals("Users not found", thrown.getMessage());
+    }
+
+    @Test
     @DisplayName("Test find user ById - Success")
     void findById_success() {
 
@@ -67,8 +83,19 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Test find all users - Not Found")
-    void findAll_NotFound() {
+    @DisplayName("Test find users by username - Success")
+    public void findUsersBySurname_success() throws Exception {
+        List<User> listUser = new ArrayList<User>();
+        listUser.add(USER_1);
+        listUser.add(USER_2);
+        when(userRepository.findAll()).thenReturn(listUser);
+
+        Assertions.assertEquals(2, listUser.size());
+    }
+
+    @Test
+    @DisplayName("Test find users by username - Not Found")
+    void findBySurname_NotFound() {
 
         List<User> listUser = new ArrayList<User>();
 
@@ -123,7 +150,7 @@ public class UserServiceTest {
 
         when(userRepository.findUserByEmail(USER_1.getEmail())).thenReturn(Optional.of(USER_1));
 
-        IllegalStateException thrown =Assertions.assertThrows(IllegalStateException.class, () ->{
+        EntityAlreadyExistsException thrown =Assertions.assertThrows(EntityAlreadyExistsException.class, () ->{
             userService.createUser(USER_1_DTO);
         });
 

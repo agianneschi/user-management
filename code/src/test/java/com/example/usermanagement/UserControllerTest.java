@@ -8,10 +8,12 @@ import static org.hamcrest.Matchers.*;
 
 import com.example.usermanagement.controller.UserController;
 import com.example.usermanagement.dto.UserDto;
+import com.example.usermanagement.exception.EntityAlreadyExistsException;
 import com.example.usermanagement.repository.bean.User;
 import com.example.usermanagement.service.UserService;
 import com.example.usermanagement.util.ObjectToJson;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,7 @@ public class UserControllerTest {
     User USER_2 = new User(2L,"Antonio", "Rossi", "ant.g@test","pass", "Piazza Mazzini");
 
     @Test
+    @DisplayName("Test Get all users - Success")
     public void getAllUsers_success() throws Exception {
 
         List<User> listUser = new ArrayList<User>();
@@ -51,6 +54,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Get all users - Not Found")
     public void getAllUsers_notFound() throws Exception {
 
         when(userService.getUsers())
@@ -61,6 +65,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Get user by Id - Success")
     public void getUserById_success() throws Exception {
 
         when(userService.getUser(USER_2.getId()))
@@ -72,6 +77,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Get user by Id - Not Found")
     public void getUserById_Notfound() throws Exception {
 
         when(userService.getUser(USER_2.getId()))
@@ -83,6 +89,33 @@ public class UserControllerTest {
 
 
     @Test
+    @DisplayName("Test Get user by Surname - Success")
+    public void getUserBySurname_success() throws Exception {
+
+        List<User> listUser = new ArrayList<User>();
+        listUser.add(USER_2);
+
+        when(userService.getUsersBySurname(USER_2.getSurname()))
+                .thenReturn(listUser);
+
+        this.mockMvc.perform(get("/api/v1/users/surname/Rossi"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    @DisplayName("Test Get user by Surname - Not Found")
+    public void getUserBySurname_NotFound() throws Exception {
+
+        when(userService.getUsersBySurname(USER_2.getSurname()))
+                .thenThrow(new EntityNotFoundException("Users not found"));
+
+        this.mockMvc.perform(get("/api/v1/users/surname/Rossi"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Test Delete user by Id - Success")
     public void deleteUserById_success() throws Exception {
 
         this.mockMvc.perform(delete("/api/v1/users/2"))
@@ -91,6 +124,7 @@ public class UserControllerTest {
 
 
     @Test
+    @DisplayName("Test Delete user by Id - Not Found")
     public void deleteUserById_notfound() throws Exception {
 
         doThrow(new EntityNotFoundException("user with id: " + USER_2.getId() + " does not exists"))
@@ -102,6 +136,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Create user without body - Bad Request")
     public void postUser_withoutbody_badrequest() throws Exception {
 
         this.mockMvc.perform(post("/api/v1/users"))
@@ -109,6 +144,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Create user - Success")
     public void postUser_success() throws Exception {
 
         this.mockMvc.perform(post("/api/v1/users")
@@ -118,11 +154,12 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Create user already exists - Internal Server Error")
     public void postUser_alreadyExist() throws Exception {
 
         UserDto USER_1_DTO = new UserDto( "Andrea", "Rossi", "a.g@test", "pass", "Piazza Mazzini");
 
-        doThrow(new IllegalStateException("User with email: " + USER_1_DTO.getEmail() + " already exist"))
+        doThrow(new EntityAlreadyExistsException("User with email: " + USER_1_DTO.getEmail() + " already exist"))
                 .when(userService)
                 .createUser(USER_1_DTO);
 
@@ -135,6 +172,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Create user validation Error - Bad Request")
     public void postUser_validationError_email() throws Exception {
 
         User USER_3 = new User(3L,"Antonio", "Rossi", "ant.gtest", "pass", "Piazza Tasso");
@@ -143,10 +181,11 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectToJson.convert(USER_3)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Validation Error")));
+                .andExpect(jsonPath("$.message", is("{email=must be a well-formed email address}")));
     }
 
     @Test
+    @DisplayName("Test Update user without body - Bad Request")
     public void putUser_withoutbody_badrequest() throws Exception {
 
         this.mockMvc.perform(put("/api/v1/users/" + USER_1.getId()))
@@ -154,6 +193,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Update user - Success")
     public void putUser_success() throws Exception {
 
         this.mockMvc.perform(put("/api/v1/users/" + USER_1.getId())
@@ -163,6 +203,7 @@ public class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Test Update user validation Error - Bad Request")
     public void putUser_validationError_email() throws Exception {
 
         User USER_3 = new User(3L,"Antonio", "Rossi", "ant.gtest", "pass", "Piazza Tasso");
@@ -171,7 +212,7 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectToJson.convert(USER_3)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Validation Error")));
+                .andExpect(jsonPath("$.message", is("{email=must be a well-formed email address}")));
     }
 
 }
