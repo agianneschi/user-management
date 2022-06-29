@@ -24,7 +24,7 @@ Connect to db to create table:
 
 	hostaname: localhost
 	port: 5432
-	database: postgres
+	database: user-mgmt
 	user: user-mgmt-user
 	password: user-mgmt-user
 	
